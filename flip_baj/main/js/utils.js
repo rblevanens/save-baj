@@ -73,20 +73,20 @@ function VerifCodeBarre(codeBarreAVerifier) {
 	var i;
 	var chiffre;
 	var code_barre_len;
-	code_barre_len = 'Festival_nnnn'.length;
+	code_barre_len = 'Festival_nnnnn'.length;
 
 	codeBarreAVerifier = codeBarreAVerifier.trim();
-	if (codeBarreAVerifier.length <= 4) {
-		while (codeBarreAVerifier.length < 4) { codeBarreAVerifier = '0' + codeBarreAVerifier; }
+	if (codeBarreAVerifier.length <= 5) {
+		while (codeBarreAVerifier.length < 5) { codeBarreAVerifier = '0' + codeBarreAVerifier; }
 		codeBarreAVerifier = 'Festival_' + codeBarreAVerifier;
 	}
 	else {
 		if (codeBarreAVerifier.length != code_barre_len) { return Resultat; }
 	}
 
-	if (codeBarreAVerifier.substr(0, code_barre_len - 4) != 'Festival_') { return Resultat; }
+	if (codeBarreAVerifier.substr(0, code_barre_len - 5) != 'Festival_') { return Resultat; }
 
-	for (i = (code_barre_len - 4); i < code_barre_len; i++) {
+	for (i = (code_barre_len - 5); i < code_barre_len; i++) {
 		chiffre = codeBarreAVerifier.substr(i, 1);
 
 		if ((chiffre != '0') &&

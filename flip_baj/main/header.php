@@ -18,17 +18,13 @@ include ('constantes.php');
 <link rel="stylesheet" href="css/datatables.min.css">
 <link rel="stylesheet" href="css/bootstrap.min.css" />
 <link rel="stylesheet" href="css/bootstrap-icons.css" />
-<link rel="stylesheet" href="css/custom.css">
-
-
-
-
 
 <!-- Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <!-- Bootstrap Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 
+<link rel="stylesheet" href="css/custom.css">
 
 </head>
 
