@@ -1,4 +1,4 @@
 <?php
-header("Location: ../flip_baj/main/index.php");
+header("Location: ../flip_baj/main/jassmeux.php");
 exit();
 ?>

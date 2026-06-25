@@ -223,8 +223,12 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 			</div>
 		</div>
 	</div>
+
+    <!--
 	<div class="row mt-4">
-		<!-- Section pour importer des fichiers -->
+
+		 Section pour importer des fichiers
+
 		<div class="col-sm-3">
 			<div class="card">
 				<div class="card-header bg-primary text-white">
@@ -233,7 +237,9 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 				<div class="card-body text-center">
 					<form id="insertTable" method="post" class="needs-validation"
 						novalidate>
-						<!-- Champ pour télécharger le fichier pour la table al_bourse_users -->
+
+						 Champ pour télécharger le fichier pour la table al_bourse_users
+
 						<div class="mb-3">
 							<label for="file_user">Fichier pour al_bourse_users :</label> <input
 								type="file" class="form-control" id="file_user" name="file_user"
@@ -242,7 +248,8 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 								fichier.</div>
 						</div>
 
-						<!-- Champ pour télécharger le fichier pour la table al_bourse_liste -->
+						Champ pour télécharger le fichier pour la table al_bourse_liste
+
 						<div class="mb-3">
 							<label for="file_liste">Fichier pour al_bourse_liste :</label> <input
 								type="file" class="form-control" id="file_liste"
@@ -251,7 +258,8 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 								fichier.</div>
 						</div>
 
-						<!-- Mdp pour verrouiller l'import -->
+					    Mdp pour verrouiller l'import
+
 						<div class="mb-3">
 							<div class="form-floating">
 								<input type="password" class="form-control" id="mdpImport"
@@ -262,90 +270,116 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 							</div>
 						</div>
 
-						<!-- Bouton pour soumettre le formulaire -->
+						Bouton pour soumettre le formulaire
+
 						<button type="submit" class="btn btn-primary">Importer</button>
 					</form>
 				</div>
 
 			</div>
 		</div>
+
+		-->
+
 		<!-- Section pour télécharger les fichiers de fin -->
-		<div class="col-sm-3">
-			<div class="card ">
-				<div class="card-header bg-primary text-white">
-					<h3 class="card-title">Exports de fin de festival</h3>
-				</div>
-				<div class="card-body">
-					<!-- Champ pour télécharger le PDF de stats -->
-					<button class="btn btn-primary btn-block my-2" id="getstats">Télécharger
-						les stats de fin</button>
+    <div class="row mt-4 justify-content-center">
+        <div class="col-sm-3">
+            <div class="card ">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title">Exports de fin de festival</h3>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-primary btn-block my-2" id="getstats">Télécharger les stats de fin</button>
+                    <button class="btn btn-primary btn-block my-2" id="getpdf">Télécharger les factures</button>
+                </div>
+            </div>
+        </div>
 
-					<!-- Champ pour télécharger les fichiers pdf de factures vendeurs -->
-					<button class="btn btn-primary btn-block my-2" id="getpdf">
-					Télécharger les factures
-					</button>
+        <div class="col-sm-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title"><i class="bi bi-upc-scan"></i> Numérotation ID</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small mb-3">État actuel de la base de données :</p>
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-1">
+                            Dernier utilisé :
+                            <span class="badge bg-secondary rounded-pill fs-6" id="lastIdBadge">Chargement...</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-1">
+                            Prochain prévu :
+                            <span class="badge bg-success rounded-pill fs-6" id="nextIdBadge">Chargement...</span>
+                        </li>
+                    </ul>
 
-					
-				
+                    <hr class="my-2">
 
+                    <div class="form-group mt-2">
+                        <label for="forceIdInput" class="form-label small fw-bold">Forcer le point de départ :</label>
+                        <div class="input-group input-group-sm mb-1">
+                            <input type="number" class="form-control" id="forceIdInput" placeholder="Ex: 7000">
+                            <button class="btn btn-outline-primary" type="button" id="btnForceId">Appliquer</button>
+                        </div>
+                        <small class="text-muted" style="font-size: 0.70rem;">Utile pour sauter un lot de numéros ou si vous changez de rouleau d'étiquettes.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6">
+            <div class="card">
+                <div class="card-header bg-primary">
+                    <h3 class="card-title text-white">Ajouter un jeu</h3>
+                </div>
+                <div class="card-body">
+                    <form id="formulaireajoutjeu2"
+                          class="row g-3 justify-content-center">
+                        <div class="col-auto">
+                            <div class="input-group" title="Nom du jeu">
+                                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                <input type="text" class="form-control" id="NomJeuAjout"
+                                       data-jeuxacreer="" placeholder="Nom du jeu">
+                            </div>
+                        </div>
 
+                        <div class="col-auto">
+                            <div class="input-group" title="Code a 4 chiffres">
+                                <span class="input-group-text"><i class="bi bi-upc"></i></span>
+                                <input size="17" type="text" class="form-control"
+                                       id="CodeBarreAjout" placeholder="Code à 4 ou 5 chiffres">
+                            </div>
+                        </div>
 
-					<!-- Champ pour télécharger les fichiers CSV de la base  ---- A DEBUG -----
-					<button class="btn btn-primary btn-block my-2" id="getbase">Télécharger
-						la base</button> -->
-				</div>
-			</div>
-		</div>
+                        <div class="col-auto">
+                            <div class="input-group" title= "Prix du jeu">
+                                <span class="input-group-text"><i class="bi bi-currency-euro"></i></span>
+                                <input size="4" type="text" size="6" class="form-control"
+                                       id="PrixAjout" placeholder="Prix">
+                            </div>
+                        </div>
 
-	<!-- Pour le moment, on se concentre sur autre chose -->
-		<div class="col-sm-7">
-			<div class="card">
-				<div class="card-header bg-primary">
-					<h3 class="card-title text-white">Ajouter un jeu</h3>
-				</div>
-				<div class="card-body">
-					<form id="formulaireajoutjeu2"
-						class="row g-3 justify-content-center">
-						<script type="text/javascript" >console.log(" <?php echo $idadminVision; ?> ");</script>
-						<div class="col-auto">
-							<div class="input-group" title="Nom du jeu">
-								<span class="input-group-text"><i class="bi bi-person"></i></span>
-								<input type="text" class="form-control" id="NomJeuAjout"
-									data-jeuxacreer="" placeholder="Nom du jeu">
-							</div>
-						</div>
+                        <div class="col-auto" title="Ajouter le jeu a la base de donnée">
+                            <button id="boutonsave" type="button" class="btn btn-primary boutonsave">Ajouter</button>
+                        </div>
+                    </form>
 
-						<div class="col-auto">
-							<div class="input-group" title="Code a 4 chiffres">
-								<span class="input-group-text"><i class="bi bi-upc"></i></span>
-								<input size="17" type="text" class="form-control"
-									id="CodeBarreAjout" placeholder="Code à 4 chiffres">
-							</div>
-							
-						</div>
+                    <div id="messageerreurformulaire"></div>
+                    <div id="messageformulaire"></div>
 
-						<div class="col-auto">
-							<div class="input-group" title= "Prix du jeu">
-								<span class="input-group-text"><i class="bi bi-currency-euro"></i></span>
-								<input size="4" type="text" size="6" class="form-control"
-									id="PrixAjout" placeholder="Prix">
-							</div>
-						</div>
+                    <hr class="my-4">
 
-						<div class="col-auto" title="Ajouter le jeu a la base de donnée">
-							<button id="boutonsave" type="button" class="btn btn-primary boutonsave">Ajouter</button>
-						</div>
-					</form>
-
-
-					<div id="messageerreurformulaire"></div>
-					<div id="messageformulaire"></div>
-
-
-					
-				</div>
-			</div>
-		</div>	
+                    <div class="text-center mt-3">
+                        <h5 class="text-muted mb-3">Besoin d'importer un fichier partenaire (Excel/CSV) ?</h5>
+                        <a href="jassmeux.php" target="_blank" class="btn btn-info text-white btn-lg shadow-sm" style="font-weight: bold;">
+                            <i class=" bi bi-box-arrow-in-down"></i> Lancer le module JassMeux
+                        </a>
+                        <p class="small text-muted mt-2">
+                            <em>Ce module externe permet l'import de masse (> 50 jeux) et la génération automatique des étiquettes.</em>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
 	
 
 

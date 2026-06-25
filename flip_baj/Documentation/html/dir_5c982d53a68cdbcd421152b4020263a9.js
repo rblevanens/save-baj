@@ -7,7 +7,7 @@ var dir_5c982d53a68cdbcd421152b4020263a9 =
     [ "export-base.php", "export-base_8php.html", "export-base_8php" ],
     [ "footer.php", "footer_8php.html", null ],
     [ "header.php", "header_8php.html", null ],
-    [ "index.php", "index_8php.html", null ],
+    [ "jassmeux.php", "index_8php.html", null ],
     [ "info.php", "info_8php.html", null ],
     [ "listejeux.php", "listejeux_8php.html", null ],
     [ "modaleacheteur.php", "modaleacheteur_8php.html", null ],

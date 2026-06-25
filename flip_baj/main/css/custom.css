@@ -30,9 +30,24 @@ th{
 }
 
 .invalid-feedback {
-	display: visible
+	display: visible;
 }
 
 .text-decoration-none {
 	text-decoration: none !important
+}
+
+.flip-color-btn {
+	--bs-btn-color: #ffffff;
+	--bs-btn-bg: #0096d6;
+	--bs-btn-border-color: #0096d6;
+
+	/* Couleurs au survol de la souris (un bleu un peu plus foncé) */
+	--bs-btn-hover-color: #ffffff;
+	--bs-btn-hover-bg: #007bb5;
+	--bs-btn-hover-border-color: #0070a3;
+
+	/* Couleur au clic (actif) */
+	--bs-btn-active-bg: #0070a3;
+	--bs-btn-active-border-color: #006594;
 }

@@ -24,6 +24,8 @@ $(document).ready(function() {
 		$('#modal').modal('hide');
 	});
 
+
+
 	/**
 	 * Gère l'ajout d'une transaction.
 	 */
@@ -326,7 +328,7 @@ $(document).ready(function() {
 		var codebarre = VerifCodeBarre($('#CodeBarreAjout').val());
 		var serr = '';
 		if ($('#CodeBarreAjout').val() == '' || codebarre == '') {
-			serr = serr + '<p class="bg-danger">Le code-barre doit être un nombre à 4 chiffres.</p>';
+			serr = serr + '<p class="bg-danger">Le code-barre doit être un nombre à 4-5 chiffres.</p>';
 		}
 		if ($('#NomJeuAjout').val() == '') {
 			serr = serr + '<p class="bg-danger">Le nom du jeu doit être renseigné.</p>';
@@ -389,32 +391,58 @@ $(document).ready(function() {
 			console.log(jeu);
 			console.log(jeu[0].label);
 			/* ajoute le jeu dans la liste du user en base */
-			$.ajax({
-				type: 'POST',
-				url: 'ajax/jeuxliste-add.php',
-				data: {
-					idVendeurEdition: idVendeurEdition, // Direct use of the variable
-					nom: jeu[0].label,
-					codebarre: $('#CodeBarreAjout').val(),
-					vigilance: idVendeurEdition == 1 ? 1 : 0, // Direct comparison without jQuery
-					statut: STATUS_JEUX_EN_STOCK,
-					vendu: $('#PrixAjout').val(),
-					ip: $('#ip').val()
-				},
-				success: function(data) {
-					if (data.message2 == '1') {
-						console.log('OK');
-						// You can add more actions here if the operation is successful
-					}
-				},
-				dataType: 'json',
-				async: false // Consider the implications of setting async to false
-			});
+
+            $.ajax({
+                type: 'POST',
+                url: 'ajax/jeuxliste-add.php',
+                data: {
+                    idVendeurEdition: idVendeurEdition,
+                    nom: jeu[0].label,
+                    codebarre: codebarre,
+                    vigilance: idVendeurEdition == 1 ? 1 : 0,
+                    statut: STATUS_JEUX_EN_STOCK,
+                    vendu: $('#PrixAjout').val(),
+                    ip: $('#ip').val()
+                },
+                success: function(data) {
+                    if (data.message2 == '1') {
+                        console.log('Jeu ajouté avec succès');
+
+                        // 1. Le retour utilisateur (avec ta marge my-3)
+                        $('#messageerreurformulaire').html('<div class="alert alert-success text-center py-2 my-3">✅ Le jeu <strong>' + jeu[0].label + '</strong> a été ajouté avec succès !</div>');
+
+                        setTimeout(function() {
+                            $('#messageerreurformulaire').fadeOut(500, function() {
+                                $(this).html('').show();
+                            });
+                        }, 3000);
+
+                        // 2. On met à jour le tableau en dessous
+                        if (typeof tableJeuxEnStock !== 'undefined') {
+                            tableJeuxEnStock.ajax.reload();
+                        }
+
+                        // 3. On vide les champs du formulaire pour le prochain jeu
+                        $('#formulaireajoutjeu').trigger("reset");
+
+                        // 4. LA NOUVEAUTÉ : On actualise le compteur et la case "code à 4/5 chiffres" !
+                        if (typeof synchroniserCompteurID === "function") {
+                            synchroniserCompteurID();
+                        }
+                    }
+                },
+                dataType: 'json',
+                async: false
+            });
 			console.log("tableJeuxEnStock initialized", tableJeuxEnStock);
 			/* ajout dans la table UI */
 			tableJeuxEnStock.ajax.reload();
 			/* ide les champs input pour prochaine saisie */
 			$('#formulaireajoutjeu').trigger("reset");
+
+			if (typeof synchroniserCompteurID === "function") {
+				synchroniserCompteurID();
+			}
 		}
 	});
 	
@@ -508,4 +536,71 @@ $('#envoiMailsFactures').on('click', function () {
 
 	
 
+});
+
+// Fonction pour synchroniser les badges et le champ d'ajout manuel
+function synchroniserCompteurID() {
+	fetch('ajax/gestion_id.php')
+		.then(response => response.json())
+		.then(data => {
+			// Sécurité : on vérifie que l'élément HTML existe avant de changer son texte !
+			let lastBadge = document.getElementById('lastIdBadge');
+			let nextBadge = document.getElementById('nextIdBadge');
+
+			if (lastBadge) lastBadge.textContent = data.last_id;
+			if (nextBadge) nextBadge.textContent = data.next_id;
+
+			const champManuel = document.getElementById('CodeBarreAjout');
+			if(champManuel) champManuel.value = data.next_id;
+		})
+		.catch(error => console.error("Erreur lecture ID:", error));
+}
+
+// On englobe TOUT dans UN SEUL DOMContentLoaded
+document.addEventListener('DOMContentLoaded', function() {
+
+	// 1. On lance la synchro au démarrage
+	synchroniserCompteurID();
+
+	// 2. On attache l'action au bouton Appliquer
+	const btnForce = document.getElementById('btnForceId');
+
+	if(btnForce) {
+		// On ajoute le "e" pour l'événement
+		btnForce.addEventListener('click', function(e) {
+			e.preventDefault(); // EMPÊCHE LA PAGE DE SE RAFRAÎCHIR SI C'EST DANS UN FORMULAIRE !
+
+			const forceVal = document.getElementById('forceIdInput').value;
+			if (!forceVal) return;
+
+			const formData = new FormData();
+			formData.append('force_id', forceVal);
+
+			fetch('ajax/gestion_id.php', {
+				method: 'POST',
+				body: formData
+			})
+				.then(response => response.json())
+				.then(data => {
+					if(data.success) {
+						synchroniserCompteurID();
+						document.getElementById('forceIdInput').value = '';
+
+						const demande = parseInt(forceVal);
+						const reel = data.next_id;
+
+						if (reel > demande) {
+							alert("Il n'est pas possible de commencer à " + demande + ", vous commencerez au nombre le plus proche possible (" + reel + ").");
+						} else {
+							alert("Succès : Le compteur démarrera désormais à " + reel + ".");
+						}
+					} else {
+						alert("Erreur serveur : " + (data.error || "Raison inconnue"));
+					}
+				})
+				.catch(error => console.error("Erreur de communication :", error));
+		});
+	} else {
+		console.warn("Bouton btnForceId introuvable dans le HTML.");
+	}
 });
