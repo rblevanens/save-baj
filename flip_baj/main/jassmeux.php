@@ -65,7 +65,7 @@ include 'header.php';
                                 <span class="fs-5 fw-semibold d-block text-dark mb-2">Glissez votre fichier ici ou cliquez pour parcourir</span>
                                 <span class="text-muted small d-block mb-4">Format CSV uniquement (séparateur point-virgule)</span>
 
-                                <input type="file" id="csvJassMeux" accept=".csv" required
+                                <input type="file" id="csvJassMeux" accept=".csv, .xlsx" required
                                        class="position-absolute top-0 start-0 w-100 h-100 opacity-0 cursor-pointer" style="cursor: pointer;">
 
                                 <div id="fileSelectedBadge" class="d-none">
@@ -92,7 +92,7 @@ include 'header.php';
     </main>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="jassmeux/jassmeux.js"></script>
+    <script src="jassmeux/jassmeux.js?=v2"></script>
 
     <?php
 include 'footer.php';

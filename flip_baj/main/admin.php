@@ -106,8 +106,6 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 <script type="text/javascript" src="js/listejeux.js"></script>
 
 
-<script type="text/javascript" src="js/admin.js"></script>
-
 <!-- Besoin pour ajouter un jeu -->
 
 <ul class="filariane ms-2">
@@ -292,6 +290,7 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
                     <button class="btn btn-primary btn-block my-2" id="getstats">Télécharger les stats de fin</button>
                     <button class="btn btn-primary btn-block my-2" id="getpdf">Télécharger les factures</button>
                 </div>
+
             </div>
         </div>
 
@@ -330,12 +329,6 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
                             <i class="bi bi-printer"></i> Imprimer planche vierge (24)
                         </button>
                         <small class="text-muted text-center mt-1" style="font-size: 0.70rem;">Réserve automatiquement les 24 prochains numéros.</small>
-                    </div>
-                    <hr class="my-2">
-                    <div class="d-grid mt-2">
-                        <button class="btn btn-warning btn-sm fw-bold shadow-sm" type="button" onclick="window.ouvrirSaisieVierge()">
-                            <i class="bi bi-link-45deg"></i> Assigner un jeu à une étiquette
-                        </button>
                     </div>
                 </div>
             </div>
@@ -442,7 +435,6 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 	</div>
 	
 </main>
-<script src="js/admin.js"></script>
 
 <div class="modal fade" id="modalSaisieVierge" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -487,6 +479,8 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
         </div>
     </div>
 </div>
+
+<script type="text/javascript" src="js/admin.js"></script>
 
 <?php
 include 'footer.php';

@@ -495,6 +495,11 @@ $(document).ready(function() {
 		window.location.href = 'export-base.php';
 	});
 
+	/* manière différente */
+	$('#getBackupSQL').on('click', function() {
+		window.location.href = 'backup-sql.php';
+	});
+
 	/**
 	 * Redirige l'utilisateur vers la page de téléchargement PDF.
 	 */
@@ -608,34 +613,28 @@ document.addEventListener('DOMContentLoaded', function() {
 // =========================================================================
 // BOUTON PLANCHE VIERGE (Sécurité Ultime Anti-Doublon)
 // =========================================================================
-$('#btnPlancheVierge').off('click').on('click', function(e) {
+$('#btnPlancheVierge').on('click', function(e) {
 	e.preventDefault();
 
-	// 1. LE CADENAS GLOBAL (Bloque le 2ème clic fantôme instantanément)
-	if (window.isPlancheLocked) {
-		return;
-	}
-	window.isPlancheLocked = true; // On verrouille !
-
-	// 2. Demande de confirmation
+	// 1. Demande de confirmation simple et classique
 	if (!confirm("Voulez-vous générer une planche de 24 étiquettes vierges ? \n\nCela va automatiquement réserver et avancer les compteurs de 24 numéros.")) {
-		window.isPlancheLocked = false; // On déverrouille si l'utilisateur fait "Annuler"
-		return;
+		return; // On arrête tout si l'utilisateur clique sur "Annuler"
 	}
 
 	const $btn = $(this);
 	const texteOriginal = '<i class="bi bi-printer"></i> Imprimer planche vierge (24)';
 
-	// 3. Interface en chargement
+	// 2. Interface en chargement (on désactive le bouton le temps du calcul)
 	$btn.prop('disabled', true);
 	$btn.html('<span class="spinner-border spinner-border-sm"></span> Création du PDF...');
 
-	// 4. Appel au serveur
+	// 3. Appel au serveur
 	fetch('ajax/generer_planche_vierge.php')
 		.then(response => response.json())
 		.then(data => {
 			if (data.success) {
 				window.open('../tmp/' + data.pdf, '_blank');
+				// Met à jour les compteurs sur la page si la fonction existe
 				if (typeof synchroniserCompteurID === "function") {
 					synchroniserCompteurID();
 				}
@@ -648,12 +647,8 @@ $('#btnPlancheVierge').off('click').on('click', function(e) {
 			alert("Impossible de joindre le serveur pour créer la planche.");
 		})
 		.finally(() => {
-			// 5. Nettoyage final : on remet le bouton à zéro et ON ROUVRE LE CADENAS
+			// 4. Nettoyage final : on remet le bouton à son état normal
 			$btn.html(texteOriginal);
 			$btn.prop('disabled', false);
-
-			setTimeout(() => {
-				window.isPlancheLocked = false;
-			}, 500); // Petite marge de sécurité d'une demi-seconde
 		});
 });
