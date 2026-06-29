@@ -18,10 +18,10 @@ if (isset($_POST["idVendeurEdition"]) || isset($_POST["idVendeurFlip"])) {
     }
 
     // Récupération des champs
-    $nom_jeu = isset($_POST["nom"]) ? $_POST["nom"] : 'Default Game Name'; 
+    $nom_jeu = isset($_POST["nom"]) ? trim($_POST["nom"]) : 'Default Game Name';
     $idVendeurEdition = isset($_POST["idVendeurEdition"]) ? $_POST["idVendeurEdition"] : ($_POST["idVendeurFlip"] ?? null);
     $codebarre = $_POST["codebarre"] ?? '';
-    $statut = $_POST["statut"] ?? '';
+    $statut = $_POST["statut"] ?? 2; // Statut 2 (En stock) par défaut si non fourni
     $vigilance = 0;
     $vendu = isset($_POST["vendu"]) ? floatval($_POST["vendu"]) : null;
     $ip = $_POST["ip"] ?? '';
@@ -29,13 +29,80 @@ if (isset($_POST["idVendeurEdition"]) || isset($_POST["idVendeurFlip"])) {
     // Vérification du prix
     if ($vendu === null || $vendu < 0) {
         echo json_encode([
-            "message1" => "TEST ERREUR AFFICHAGE",
+            "message1" => "Le prix saisi n'est pas valide.",
             "message2" => "0"
         ]);
         exit;
-        
     }
 
+    // =========================================================================
+    // VÉRIFICATION ET GESTION DES ÉTIQUETTES VIERGES (UPSERT)
+    // =========================================================================
+    try {
+        // On vérifie si ce code-barre existe déjà dans la base
+        $stmtCheck = $pdo->prepare("SELECT id, nom_jeu FROM al_bourse_liste WHERE code_barre = :cb AND annee = :annee");
+        $stmtCheck->execute([':cb' => $codebarre, ':annee' => annee_base]);
+        $jeuExistant = $stmtCheck->fetch(\PDO::FETCH_ASSOC);
+
+        if ($jeuExistant) {
+            // Le code-barre existe ! On cherche le mot "VIERGE" peu importe la casse.
+            if (strpos(strtoupper($jeuExistant['nom_jeu']), 'VIERGE') !== false) {
+
+                // OUI ! C'est une étiquette vierge. On l'écrase avec les vraies infos du jeu.
+                $stmtUpdate = $pdo->prepare("UPDATE al_bourse_liste SET id_utilisateur = :id_user, nom_jeu = :nom, prix = :prix, statut = :statut, date_reception = :date_recep WHERE code_barre = :cb AND annee = :annee");
+                $successUpdate = $stmtUpdate->execute([
+                    ':id_user' => $idVendeurEdition,
+                    ':nom' => $nom_jeu,
+                    ':prix' => $vendu,
+                    ':statut' => $statut,
+                    ':date_recep' => date('Y-m-d H:i:s'),
+                    ':cb' => $codebarre,
+                    ':annee' => annee_base
+                ]);
+
+                if ($successUpdate) {
+                    $id = $jeuExistant['id'];
+
+                    // On journalise le changement comme pour un ajout classique
+                    $paramJournal = [
+                        'id_liste' => $id,
+                        'old_id_statut' => 11, // Code générique pour "Dépôt"
+                        'new_id_statut' => $statut,
+                        'ip' => $_SERVER['REMOTE_ADDR'],
+                        'date' => date('Y-m-d H:i:s')
+                    ];
+                    $statementJournal = $pdo->prepare($SQL_30_journalStatut);
+                    $statementJournal->execute($paramJournal);
+
+                    echo json_encode([
+                        "message1" => $id,
+                        "message2" => '1' // Renvoie "Succès" au JavaScript
+                    ]);
+                    exit; // ON ARRÊTE LE SCRIPT ICI.
+                }
+            } else {
+                // NON ! C'est un vrai jeu existant. On bloque la tentative de doublon !
+                echo json_encode([
+                    "message1" => "Ce code barre est déjà attribué au jeu : " . $jeuExistant['nom_jeu'],
+                    "message2" => "0"
+                ]);
+                exit; // On arrête le script.
+            }
+        }
+    } catch (PDOException $e) {
+        echo json_encode([
+            "message1" => "Erreur lors de la vérification : " . $e->getMessage(),
+            "message2" => "0"
+        ]);
+        exit;
+    }
+    // =========================================================================
+    // FIN DU BLOC UPSERT
+    // =========================================================================
+
+
+    // SI LE SCRIPT ARRIVE ICI : C'est que le code-barre n'existe pas du tout.
+    // On fait donc l'ajout normal et classique.
     try {
         $statement = $pdo->prepare($SQL_11_insertlistejeu);
 

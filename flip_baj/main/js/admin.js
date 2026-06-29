@@ -7,7 +7,7 @@
  */
 
 $(document).ready(function() {
-	$('#messageinfo').hide(); 
+	$('#messageinfo').hide();
 	/**
 	 * Ouvre la fenêtre modale d'ajout d'argent.
 	 */
@@ -33,7 +33,7 @@ $(document).ready(function() {
 		// Récupérer les valeurs des champs
 		var montantAjout = $("#MontantAjout").val();
 		var mdpAjoutTrans = $("#MdpAjoutTrans").val();
-		var motDePasseStocke = "5ccc2e8715d7a17c3110afe37b8561b84b450db8efcf187d90649f212201050f"; 
+		var motDePasseStocke = "5ccc2e8715d7a17c3110afe37b8561b84b450db8efcf187d90649f212201050f";
 
 		if (montantAjout == "" ||
 			montantAjout == "0") {
@@ -204,7 +204,7 @@ $(document).ready(function() {
 				$.ajax({
 					type: 'POST',
 					url: 'ajax/upload_files.php',
-					data: formData, // Ne pas spécifier contentType ni processData 
+					data: formData, // Ne pas spécifier contentType ni processData
 					contentType: false,
 					processData: false,
 					success: function(data) {
@@ -244,7 +244,7 @@ $(document).ready(function() {
 	$('#getstats').on('click', function() {
 		$('#pdfModal').modal('show');
 	});
-	
+
 	// Générer le PDF lorsque l'utilisateur soumet la popup
     $('#pdfModal').on('click', '#generatePdfButton', function(){
         var startDate = $('#start_date').val();
@@ -277,7 +277,7 @@ $(document).ready(function() {
         }
     });
 
-// Partie formulaire 
+// Partie formulaire
 	$.ajax({
 		type: 'POST',
 		url: 'ajax/user-get.php',
@@ -293,7 +293,7 @@ $(document).ready(function() {
 					$('#messageinfo').html('<p class="bg-danger">Impossible de trouver en base le vendeur,</p>');
 					$('.container').hide();
 				} else {
-					idVendeurEdition = data.message1['id'];				
+					idVendeurEdition = data.message1['id'];
 				}
 			}
 		},
@@ -387,7 +387,7 @@ $(document).ready(function() {
 					async: false
 				});
 			}
-            
+
 			console.log(jeu);
 			console.log(jeu[0].label);
 			/* ajoute le jeu dans la liste du user en base */
@@ -445,7 +445,7 @@ $(document).ready(function() {
 			}
 		}
 	});
-	
+
 	$(document).on('keyup', '#PrixRendu', function() {
 		if ($(this).val() != '') {
 			$(this).val($(this).val().replace(",", ""));
@@ -485,7 +485,7 @@ $(document).ready(function() {
 			$('.showprice').removeClass('d-none');
 		}
 	});
-	
+
 	console.log("L'ID de l'administrateur est :", idVendeurEdition);
 
 	/**
@@ -495,6 +495,11 @@ $(document).ready(function() {
 		window.location.href = 'export-base.php';
 	});
 
+	/* manière différente */
+	$('#getBackupSQL').on('click', function() {
+		window.location.href = 'backup-sql.php';
+	});
+
 	/**
 	 * Redirige l'utilisateur vers la page de téléchargement PDF.
 	 */
@@ -502,7 +507,7 @@ $(document).ready(function() {
 		if(confirm("Vous allez être redirigé vers la page de téléchargement")){
 			window.location.href = "/FlipBAJ/flip_baj/main/pdf/generer_pdf.php";
 		}
-		
+
 
 	});
 	 /**
@@ -534,7 +539,7 @@ $('#envoiMailsFactures').on('click', function () {
 });
 
 
-	
+
 
 });
 
@@ -603,4 +608,47 @@ document.addEventListener('DOMContentLoaded', function() {
 	} else {
 		console.warn("Bouton btnForceId introuvable dans le HTML.");
 	}
+});
+
+// =========================================================================
+// BOUTON PLANCHE VIERGE (Sécurité Ultime Anti-Doublon)
+// =========================================================================
+$('#btnPlancheVierge').on('click', function(e) {
+	e.preventDefault();
+
+	// 1. Demande de confirmation simple et classique
+	if (!confirm("Voulez-vous générer une planche de 24 étiquettes vierges ? \n\nCela va automatiquement réserver et avancer les compteurs de 24 numéros.")) {
+		return; // On arrête tout si l'utilisateur clique sur "Annuler"
+	}
+
+	const $btn = $(this);
+	const texteOriginal = '<i class="bi bi-printer"></i> Imprimer planche vierge (24)';
+
+	// 2. Interface en chargement (on désactive le bouton le temps du calcul)
+	$btn.prop('disabled', true);
+	$btn.html('<span class="spinner-border spinner-border-sm"></span> Création du PDF...');
+
+	// 3. Appel au serveur
+	fetch('ajax/generer_planche_vierge.php')
+		.then(response => response.json())
+		.then(data => {
+			if (data.success) {
+				window.open('../tmp/' + data.pdf, '_blank');
+				// Met à jour les compteurs sur la page si la fonction existe
+				if (typeof synchroniserCompteurID === "function") {
+					synchroniserCompteurID();
+				}
+			} else {
+				alert("Erreur lors de la création de la planche : " + (data.error || "Inconnue"));
+			}
+		})
+		.catch(error => {
+			console.error("Erreur de communication :", error);
+			alert("Impossible de joindre le serveur pour créer la planche.");
+		})
+		.finally(() => {
+			// 4. Nettoyage final : on remet le bouton à son état normal
+			$btn.html(texteOriginal);
+			$btn.prop('disabled', false);
+		});
 });

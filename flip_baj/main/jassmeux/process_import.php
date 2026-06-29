@@ -59,6 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fileCSV'])) {
 
         $bom = fread($handle, 3);
         if ($bom !== "\xEF\xBB\xBF") rewind($handle);
+
+        // 1. ON SAUTE LA LIGNE 1
+        fgetcsv($handle, 1000, ';');
+
+        // 2. ON LIT LA LIGNE 2 (Vendeur)
         $vendeurData = fgetcsv($handle, 1000, ';');
 
         $nom = trim($vendeurData[2] ?? '');
@@ -71,8 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fileCSV'])) {
         $asso_nom = trim($vendeurData[9] ?? '');
         $asso_siege = trim($vendeurData[10] ?? '');
 
-        if(empty($nom) || empty($prenom)) {
-            echo json_encode(["message1" => "Erreur : Vendeur introuvable.", "message2" => "0"]);
+        if(empty($nom) || empty($prenom) || $nom === 'Nom du vendeur') {
+            echo json_encode(["message1" => "Erreur : Impossible de lire les informations du vendeur sur la ligne 2.", "message2" => "0"]);
             exit;
         }
 
@@ -86,16 +91,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fileCSV'])) {
             $idVendeur = $pdo->lastInsertId();
         }
 
-        fgetcsv($handle, 1000, ';');
+        // 3. ON SAUTE LA LIGNE 3
         fgetcsv($handle, 1000, ';');
 
         $inserted = 0;
         $ignored = 0;
         $etiquettes = [];
-
-        // --- NOUVEAUTÉ : CAPTURE DE L'ADRESSE IP ---
         $ip_importateur = $_SERVER['REMOTE_ADDR'] ?? 'IP_INCONNUE';
 
+        $stmtVierges = $pdo->prepare("SELECT id, code_barre FROM al_bourse_liste WHERE UPPER(nom_jeu) LIKE '%VIERGE%' AND annee = " . annee_base . " ORDER BY id ASC");
+        $stmtVierges->execute();
+        $vierges_dispos = $stmtVierges->fetchAll(\PDO::FETCH_ASSOC);
+
+        // 4. ON BOUCLE SUR LES JEUX DU FICHIER
         while (($data = fgetcsv($handle, 1000, ';')) !== false) {
             if (count($data) >= 4) {
                 $nom_jeu = trim($data[2] ?? '');
@@ -109,37 +117,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fileCSV'])) {
                     continue;
                 }
 
+                // --- ENRICHISSEMENT DU DICTIONNAIRE (AUTOCOMPLÉTION) ---
+                $stmtCheckJeu = $pdo->prepare("SELECT Id FROM al_bourse_jeux WHERE Nom = ?");
+                $stmtCheckJeu->execute([$nom_jeu]);
+                if (!$stmtCheckJeu->fetchColumn()) {
+                    $stmtInsertJeu = $pdo->prepare("INSERT INTO al_bourse_jeux (Nom) VALUES (?)");
+                    $stmtInsertJeu->execute([$nom_jeu]);
+                }
+
                 $prix = intval($prix_brut);
                 $quantite = (is_numeric($quantite_brut) && intval($quantite_brut) > 0) ? intval($quantite_brut) : 1;
 
+                // ON AJOUTE CHAQUE EXEMPLAIRE DU JEU
                 for ($i = 0; $i < $quantite; $i++) {
-                    $code_num = genererCodeUniqueJassMeux($pdo);
-                    $code_barre_bdd = 'Festival_' . $code_num;
 
-                    // --- NOUVEAUTÉ : INSERTION DE L'IP DANS ID_DEPOT ---
-                    $stmt = $pdo->prepare("INSERT INTO al_bourse_liste (id_utilisateur, nom_jeu, prix, code_barre, statut, vigilance, id_depot, date_reception, annee) VALUES (?, ?, ?, ?, 2, 0, ?, NOW(), ?)");
-                    $stmt->execute([$idVendeur, $nom_jeu, $prix, $code_barre_bdd, $ip_importateur, annee_base]);
+                    if (count($vierges_dispos) > 0) {
+                        // --> STRATÉGIE 1 : ON RÉUTILISE UNE ÉTIQUETTE VIERGE (UPDATE)
+                        $vierge = array_shift($vierges_dispos);
+                        $code_barre_bdd = $vierge['code_barre'];
+                        $code_num = str_replace('Festival_', '', $code_barre_bdd);
+
+                        $stmtUp = $pdo->prepare("UPDATE al_bourse_liste SET id_utilisateur = ?, nom_jeu = ?, prix = ?, statut = 2, vigilance = 0, id_depot = ?, date_reception = NOW() WHERE id = ?");
+                        $stmtUp->execute([$idVendeur, $nom_jeu, $prix, $ip_importateur, $vierge['id']]);
+
+                        // AUCUN AJOUT AU TABLEAU $etiquettes ICI : ON NE L'IMPRIME PAS !
+
+                    } else {
+                        // --> STRATÉGIE 2 : PLUS DE VIERGES, ON CRÉE UNE NOUVELLE ENTRÉE (INSERT)
+                        $code_num = genererCodeUniqueJassMeux($pdo);
+                        $code_barre_bdd = 'Festival_' . $code_num;
+
+                        $stmtIn = $pdo->prepare("INSERT INTO al_bourse_liste (id_utilisateur, nom_jeu, prix, code_barre, statut, vigilance, id_depot, date_reception, annee) VALUES (?, ?, ?, ?, 2, 0, ?, NOW(), " . annee_base . ")");
+                        $stmtIn->execute([$idVendeur, $nom_jeu, $prix, $code_barre_bdd, $ip_importateur]);
+
+                        // ON L'AJOUTE AU PDF CAR C'EST UN TOUT NOUVEAU CODE
+                        $etiquettes[] = ['nom' => $nom_jeu, 'prix' => $prix, 'code' => $code_num];
+                    }
 
                     $inserted++;
-                    $etiquettes[] = ['nom' => $nom_jeu, 'prix' => $prix, 'code' => $code_num];
                 }
             }
         }
         fclose($handle);
 
+        // 5. GÉNÉRATION DU PDF (Uniquement s'il y a de NOUVEAUX jeux)
         if (!empty($etiquettes)) {
             $pdf = new \FPDF_Extended('P', 'mm', 'A4');
             $pdf->SetAutoPageBreak(false);
 
             $col = 0;
             $row = 0;
-            $margeTop = 4.5;
+            $margeTop = 1.7;
 
             foreach ($etiquettes as $etiquette) {
                 if ($col == 0 && $row == 0) $pdf->AddPage();
 
-                $x = $col * 70;
-                $y = $margeTop + ($row * 35);
+                $x = $col * 67;
+                $y = $margeTop + ($row * 36.5);
 
                 $pdf->SetFont('Arial', '', 10);
                 $pdf->SetXY($x + 2, $y + 4);
@@ -171,7 +205,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fileCSV'])) {
             $response['pdf'] = $pdfName;
         }
 
-        $response['message1'] = "Succès : **$inserted** étiquettes de jeux importées. ($ignored rejet(s) pour prix invalide).";
+        $response['message1'] = "Succès : **$inserted** jeux importés en base. ($ignored rejet(s) pour prix invalide).";
         $response['message2'] = '1';
     } else {
         $response['message1'] = "Impossible de lire le fichier.";

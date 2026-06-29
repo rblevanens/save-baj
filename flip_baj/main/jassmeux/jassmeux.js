@@ -20,62 +20,80 @@ document.getElementById('formJassMeux').addEventListener('submit', function(e) {
     const file = fileInput.files[0];
     if (!file) return;
 
-    // --- SI C'EST UN FICHIER EXCEL (.xlsx) ---
-    if (file.name.endsWith('.xlsx')) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const data = new Uint8Array(event.target.result);
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const data = new Uint8Array(event.target.result);
 
-            // On décode le fichier Excel avec la librairie SheetJS
-            const workbook = XLSX.read(data, {type: 'array'});
-            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        // 1. SHEETJS LIT TOUT (XLSX, CSV, peu importe le séparateur d'origine)
+        const workbook = XLSX.read(data, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
 
-            // On le convertit en texte CSV pur
-            const csvString = XLSX.utils.sheet_to_csv(firstSheet, { FS: ";" });
+        // 2. ON TRANSFORME EN TABLEAU JS (Pour lire les colonnes C, D, E proprement)
+        const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
 
-            // On crée un faux fichier CSV en mémoire pour tromper le serveur
-            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-            const fileAEnvoyer = new File([blob], file.name.replace('.xlsx', '.csv'), { type: 'text/csv' });
+        // 3. ON COMPTE EXACTEMENT COMME TON PHP
+        let nbJeux = 0;
 
-            // On lance la suite du traitement
-            lancerImportation(csvString, fileAEnvoyer);
-        };
-        // Attention : on lit l'Excel sous forme de buffer binaire, pas de texte !
-        reader.readAsArrayBuffer(file);
-    }
-    // --- SI C'EST DÉJÀ UN FICHIER CSV ---
-    else {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const csvString = event.target.result;
-            lancerImportation(csvString, file);
-        };
-        reader.readAsText(file);
-    }
-});
+        // La boucle commence à l'index 3 (ce qui correspond à la ligne 4 d'Excel)
+        for (let i = 3; i < rows.length; i++) {
+            const row = rows[i];
 
+            // On s'assure que la ligne a au moins des données jusqu'à la colonne Prix
+            if (row.length >= 4) {
+                const nomJeu = String(row[2]).trim(); // Colonne C (Index 2)
+                const prixBrut = String(row[3]).trim(); // Colonne D (Index 3)
+                const quantiteBrut = String(row[4] || '1').trim(); // Colonne E (Index 4)
 
-/**
- * Fonction qui s'occupe de compter les lignes et d'envoyer la requête au serveur.
- * Elle est appelée que le fichier d'origine soit un CSV ou un XLSX converti.
- */
-function lancerImportation(csvText, fileObject) {
-    const fileInput = document.getElementById('csvJassMeux');
-    const btn = document.getElementById('btnImport');
-    const resultDiv = document.getElementById('jassmeuxResult');
+                // Si le Nom et le Prix sont présents
+                if (nomJeu !== '' && prixBrut !== '') {
+                    // On vérifie que le prix est un chiffre valide (comme ton PHP)
+                    const prix = parseInt(prixBrut, 10);
+                    if (!isNaN(prix) && prix > 0) {
+                        let qte = parseInt(quantiteBrut, 10);
+                        if (isNaN(qte) || qte <= 0) qte = 1;
 
-    // On compte le nombre de jeux pour la sécurité
-    const lines = csvText.split('\n').filter(line => line.trim() !== '');
-    const nbJeux = lines.length - 3; // On déduit tes lignes d'en-tête
+                        // On ajoute la quantité réelle au compteur de jeux
+                        nbJeux += qte;
+                    }
+                }
+            }
+        }
 
-    if (nbJeux > 50) {
-        const confirmImport = confirm(`Attention : Ce fichier contient un volume de ${nbJeux} jeux. Êtes-vous sûr de vouloir lancer cet import massif ?`);
-        if (!confirmImport) {
+        // 4. SÉCURITÉ ET ALERTE
+        if (nbJeux === 0) {
+            alert("Aucun jeu valide n'a été trouvé. Vérifiez que les colonnes 'Nom du jeu' et 'Prix' sont bien remplies à partir de la ligne 4.");
             fileInput.value = '';
             document.getElementById('fileSelectedBadge').classList.add('d-none');
             return;
         }
-    }
+
+        if (nbJeux > 50) {
+            const confirmImport = confirm(`Attention : Ce fichier contient un volume de ${nbJeux} jeux. Êtes-vous sûr de vouloir lancer cet import massif ?`);
+            if (!confirmImport) {
+                fileInput.value = '';
+                document.getElementById('fileSelectedBadge').classList.add('d-none');
+                return;
+            }
+        }
+
+        // 5. ON GÉNÈRE LE CSV PARFAIT POUR LE PHP (on force le point-virgule)
+        const csvString = XLSX.utils.sheet_to_csv(firstSheet, { FS: ";" });
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const nomFichier = file.name.replace(/\.[^/.]+$/, "") + ".csv";
+        const fileAEnvoyer = new File([blob], nomFichier, { type: 'text/csv' });
+
+        // 6. ENVOI AU SERVEUR
+        envoyerAuServeur(fileAEnvoyer);
+    };
+
+    // On lit en binaire : ça marche pour Excel ET pour CSV !
+    reader.readAsArrayBuffer(file);
+});
+
+
+function envoyerAuServeur(fileObject) {
+    const btn = document.getElementById('btnImport');
+    const resultDiv = document.getElementById('jassmeuxResult');
 
     // --- ANIMATION DE CHARGEMENT ---
     btn.disabled = true;
@@ -83,7 +101,6 @@ function lancerImportation(csvText, fileObject) {
     resultDiv.innerHTML = '';
 
     const formData = new FormData();
-    // On attache notre fichier (le vrai CSV, ou l'Excel converti en CSV)
     formData.append('fileCSV', fileObject);
 
     fetch('jassmeux/process_import.php', {
@@ -92,7 +109,6 @@ function lancerImportation(csvText, fileObject) {
     })
         .then(response => response.json())
         .then(data => {
-            // Remise à zéro du bouton
             btn.disabled = false;
             btn.innerHTML = `<i class="bi bi-lightning-charge-fill"></i> Lancer l'importation de masse`;
 

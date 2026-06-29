@@ -106,8 +106,6 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 <script type="text/javascript" src="js/listejeux.js"></script>
 
 
-<script type="text/javascript" src="js/admin.js"></script>
-
 <!-- Besoin pour ajouter un jeu -->
 
 <ul class="filariane ms-2">
@@ -292,6 +290,7 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
                     <button class="btn btn-primary btn-block my-2" id="getstats">Télécharger les stats de fin</button>
                     <button class="btn btn-primary btn-block my-2" id="getpdf">Télécharger les factures</button>
                 </div>
+
             </div>
         </div>
 
@@ -315,13 +314,21 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 
                     <hr class="my-2">
 
-                    <div class="form-group mt-2">
+                    <div class="form-group mt-2 mb-3">
                         <label for="forceIdInput" class="form-label small fw-bold">Forcer le point de départ :</label>
                         <div class="input-group input-group-sm mb-1">
                             <input type="number" class="form-control" id="forceIdInput" placeholder="Ex: 7000">
                             <button class="btn btn-outline-primary" type="button" id="btnForceId">Appliquer</button>
                         </div>
                         <small class="text-muted" style="font-size: 0.70rem;">Utile pour sauter un lot de numéros ou si vous changez de rouleau d'étiquettes.</small>
+                    </div>
+
+                    <hr class="my-2">
+                    <div class="d-grid mt-2 pt-1">
+                        <button class="btn btn-dark btn-sm fw-bold shadow-sm" type="button" id="btnPlancheVierge">
+                            <i class="bi bi-printer"></i> Imprimer planche vierge (24)
+                        </button>
+                        <small class="text-muted text-center mt-1" style="font-size: 0.70rem;">Réserve automatiquement les 24 prochains numéros.</small>
                     </div>
                 </div>
             </div>
@@ -428,7 +435,52 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 	</div>
 	
 </main>
-<script src="js/admin.js"></script>
+
+<div class="modal fade" id="modalSaisieVierge" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="bi bi-upc-scan"></i> Assigner une étiquette vierge</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <form id="formSaisieVierge">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-bold small">1. Code-barres de l'étiquette</label>
+                            <input type="text" class="form-control form-control-lg border-warning" id="scanCodeVierge" placeholder="Ex: 10042 ou Festival_10042" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-secondary fw-bold small">2. Prix de vente (€)</label>
+                            <input type="number" class="form-control form-control-lg" id="prixJeuVierge" placeholder="Ex: 15" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fw-bold small">3. Vendeur (Propriétaire du jeu)</label>
+                        <input type="text" class="form-control" id="searchVendeurVierge" placeholder="Rechercher par nom ou prénom..." required>
+                        <input type="hidden" id="idVendeurVierge">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label text-secondary fw-bold small">4. Nom du jeu</label>
+                        <input type="text" class="form-control" id="nomJeuVierge" placeholder="Saisir le nom du jeu..." required>
+                    </div>
+
+                    <div id="msgVierge"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-warning fw-bold px-4" id="btnSaveVierge">
+                    <i class="bi bi-check-circle"></i> Valider et Assigner le jeu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript" src="js/admin.js"></script>
 
 <?php
 include 'footer.php';
