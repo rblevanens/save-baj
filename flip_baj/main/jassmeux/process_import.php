@@ -165,9 +165,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fileCSV'])) {
             $pdf = new \FPDF_Extended('P', 'mm', 'A4');
             $pdf->SetAutoPageBreak(false);
 
+            $offsetFile = __DIR__ . '/../tmp/offset_import.txt';
+            $offset = 0;
+            if (file_exists($offsetFile)) {
+                $offset = (int)file_get_contents($offsetFile);
+                if ($offset >= 24 || $offset < 0) $offset = 0; // Sécurité si on dépasse une page
+            }
+
             $col = 0;
             $row = 0;
-            $margeTop = 1.7;
+            $margeTop = 1.7; // (Garde bien la valeur que tu as ajustée précédemment !)
+
+            for ($i = 0; $i < $offset; $i++) {
+                // On crée quand même la page pour que FPDF soit prêt
+                if ($col == 0 && $row == 0) $pdf->AddPage();
+                $col++;
+                if ($col == 3) {
+                    $col = 0;
+                    $row++;
+                    if ($row == 8) $row = 0;
+                }
+            }
 
             foreach ($etiquettes as $etiquette) {
                 if ($col == 0 && $row == 0) $pdf->AddPage();
@@ -198,11 +216,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fileCSV'])) {
                 }
             }
 
-            $pdfName = 'JassMeux_' . $idVendeur . '_' . time() . '.pdf';
-            $pdfPath = __DIR__ . '/../tmp/' . $pdfName;
-            if (!is_dir(dirname($pdfPath))) mkdir(dirname($pdfPath), 0777, true);
+            $nouvelOffset = ($offset + count($etiquettes)) % 24;
+            file_put_contents($offsetFile, $nouvelOffset);
+
+            $pdfName = 'JassMeux_' . $idVendeur . '_' . date('Ymd_His') . '.pdf';
+            $dossierVendeur = 'vendeur_' . $idVendeur;
+            $pdfPath = __DIR__ . '/../tmp/' . $dossierVendeur . '/' . $pdfName;
+
+            if (!is_dir(dirname($pdfPath))) {
+                mkdir(dirname($pdfPath), 0777, true);
+            }
+
             $pdf->Output('F', $pdfPath);
-            $response['pdf'] = $pdfName;
+            $response['pdf'] = $dossierVendeur . '/' . $pdfName;
         }
 
         $response['message1'] = "Succès : **$inserted** jeux importés en base. ($ignored rejet(s) pour prix invalide).";

@@ -1,4 +1,4 @@
 <?php
-header("Location: main/jassmeux.php");
+header("Location: main/index.php");
 exit();
 ?>

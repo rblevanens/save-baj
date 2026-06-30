@@ -83,23 +83,19 @@ try {
 
     $col = 0;
     $row = 0;
-    $margeTop = 4.5;
+    $margeTop = 1.7;
 
     foreach ($etiquettes as $code) {
-        $x = $col * 70;
-        $y = $margeTop + ($row * 35);
+        $x = $col * 67;
+        $y = $margeTop + ($row * 36.5);
 
         $pdf->SetFont('Arial', '', 10);
         $pdf->SetXY($x + 2, $y + 4);
         $pdf->Cell(66, 4, 'JEU N. ' . $code, 0, 1, 'C');
 
-        $pdf->SetFont('Arial', 'I', 9);
-        $pdf->SetXY($x + 2, $y + 10);
-        $pdf->Cell(66, 4, 'Nom: .......................................', 0, 1, 'L');
-
         $pdf->SetFont('Arial', 'B', 10);
-        $pdf->SetXY($x + 2, $y + 16);
-        $pdf->Cell(66, 4, 'Prix: ............. ' . chr(128), 0, 1, 'L');
+        $pdf->SetXY($x + 10, $y + 16);
+        $pdf->Cell(66, 4, 'Prix: ................................... ' . chr(128), 0, 1, 'L');
 
         imprimerCode39($pdf, $x + 20, $y + 22, $code, 0.35, 10);
 
@@ -114,14 +110,15 @@ try {
         }
     }
 
-    $pdfName = 'Planche_Vierge_' . time() . '.pdf';
-    $pdfPath = __DIR__ . '/../tmp/' . $pdfName;
+    $pdfName = 'Planche_Vierge_' . date('Ymd_His') . '.pdf';
+    $dossierVierge = 'planche_vierge';
+    $pdfPath = __DIR__ . '/../tmp/' . $dossierVierge . '/' . $pdfName;
 
     if (!is_dir(dirname($pdfPath))) mkdir(dirname($pdfPath), 0777, true);
     $pdf->Output('F', $pdfPath);
 
     // On renvoie le "Feu Vert" au Javascript !
-    echo json_encode(['success' => true, 'pdf' => $pdfName]);
+    echo json_encode(['success' => true, 'pdf' => $dossierVierge . '/' . $pdfName]);
 
 } catch (\Exception $e) {
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);
