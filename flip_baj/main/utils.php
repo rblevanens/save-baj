@@ -12,10 +12,10 @@ function VerifCodeBarre($codeBarreAVerifier)
 {
 
   $Resultat = "";
-  $code_barre_len = strlen("Festival_nnnn");
+  $code_barre_len = strlen("Festival_nnnnn");
   $codeBarreAVerifier = trim($codeBarreAVerifier);
-  if (strlen($codeBarreAVerifier) <= 4.0) {
-    while (strlen($codeBarreAVerifier) < 4.0) {
+  if (strlen($codeBarreAVerifier) <= 5.0) {
+    while (strlen($codeBarreAVerifier) < 5.0) {
       $codeBarreAVerifier = "0".$codeBarreAVerifier;
     }
     $codeBarreAVerifier = "Festival_".$codeBarreAVerifier;
@@ -24,10 +24,10 @@ function VerifCodeBarre($codeBarreAVerifier)
       return $Resultat;
     }
   }
-  if (substr($codeBarreAVerifier,0,$code_barre_len-4)!='Festival_')
+  if (substr($codeBarreAVerifier,0,$code_barre_len-5)!='Festival_')
   	{ return $Resultat; }
 
-  $re = "/(.*)_[0-9][0-9][0-9][0-9]/";
+  $re = "/(.*)_[0-9][0-9][0-9][0-9][0-9]/";
   if (!preg_match($re, $codeBarreAVerifier)) {
     return $Resultat;
   }

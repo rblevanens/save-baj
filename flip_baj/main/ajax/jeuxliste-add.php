@@ -48,13 +48,13 @@ if (isset($_POST["idVendeurEdition"]) || isset($_POST["idVendeurFlip"])) {
             // Le code-barre existe ! On cherche le mot "VIERGE" peu importe la casse.
             if (strpos(strtoupper($jeuExistant['nom_jeu']), 'VIERGE') !== false) {
 
-                // OUI ! C'est une étiquette vierge. On l'écrase avec les vraies infos du jeu.
-                $stmtUpdate = $pdo->prepare("UPDATE al_bourse_liste SET id_utilisateur = :id_user, nom_jeu = :nom, prix = :prix, statut = :statut, date_reception = :date_recep WHERE code_barre = :cb AND annee = :annee");
+                $stmtUpdate = $pdo->prepare("UPDATE al_bourse_liste SET id_utilisateur = :id_user, nom_jeu = :nom, prix = :prix, statut = :statut, vigilance = :vigilance, date_reception = :date_recep WHERE code_barre = :cb AND annee = :annee");
                 $successUpdate = $stmtUpdate->execute([
                     ':id_user' => $idVendeurEdition,
                     ':nom' => $nom_jeu,
                     ':prix' => $vendu,
                     ':statut' => $statut,
+                    ':vigilance' => $vigilance,
                     ':date_recep' => date('Y-m-d H:i:s'),
                     ':cb' => $codebarre,
                     ':annee' => annee_base
@@ -76,17 +76,16 @@ if (isset($_POST["idVendeurEdition"]) || isset($_POST["idVendeurFlip"])) {
 
                     echo json_encode([
                         "message1" => $id,
-                        "message2" => '1' // Renvoie "Succès" au JavaScript
+                        "message2" => '1' // Renvoie "Succès"
                     ]);
-                    exit; // ON ARRÊTE LE SCRIPT ICI.
+                    exit;
                 }
             } else {
-                // NON ! C'est un vrai jeu existant. On bloque la tentative de doublon !
                 echo json_encode([
                     "message1" => "Ce code barre est déjà attribué au jeu : " . $jeuExistant['nom_jeu'],
                     "message2" => "0"
                 ]);
-                exit; // On arrête le script.
+                exit;
             }
         }
     } catch (PDOException $e) {
@@ -101,8 +100,6 @@ if (isset($_POST["idVendeurEdition"]) || isset($_POST["idVendeurFlip"])) {
     // =========================================================================
 
 
-    // SI LE SCRIPT ARRIVE ICI : C'est que le code-barre n'existe pas du tout.
-    // On fait donc l'ajout normal et classique.
     try {
         $statement = $pdo->prepare($SQL_11_insertlistejeu);
 

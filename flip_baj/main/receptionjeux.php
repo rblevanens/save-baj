@@ -130,7 +130,7 @@ if (isset($_GET['id'])) {
 						</div>
 
 						<div class="col-auto">
-							<div class="input-group" title="Code a 4 chiffres">
+							<div class="input-group" title="Code à 4 ou 5 chiffres">
 								<span class="input-group-text"><i class="bi bi-upc"></i></span>
 								<input size="17" type="text" class="form-control"
 									id="CodeBarreAjout" placeholder="Code à 4 ou 5 chiffres">

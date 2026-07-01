@@ -502,7 +502,7 @@ $(document).ready(function() {
 		var codebarre = VerifCodeBarre($('#CodeBarreAjout').val());
 		var serr = '';
 		if ($('#CodeBarreAjout').val() == '' || codebarre == '') {
-			serr = serr + '<p class="bg-danger">Le code-barre doit être un nombre à 4 chiffres.</p>';
+			serr = serr + '<p class="bg-danger">Le code-barre doit être un nombre à 4 ou 5 chiffres.</p>';
 		}
 		if ($('#NomJeuAjout').val() == '') {
 			serr = serr + '<p class="bg-danger">Le nom du jeu doit être renseigné.</p>';
