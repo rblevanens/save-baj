@@ -543,20 +543,25 @@ $('#envoiMailsFactures').on('click', function () {
 
 });
 
-// Fonction pour synchroniser les badges et le champ d'ajout manuel
 function synchroniserCompteurID() {
 	fetch('ajax/gestion_id.php')
 		.then(response => response.json())
 		.then(data => {
-			// Sécurité : on vérifie que l'élément HTML existe avant de changer son texte !
 			let lastBadge = document.getElementById('lastIdBadge');
 			let nextBadge = document.getElementById('nextIdBadge');
+			const champManuel = document.getElementById('CodeBarreAjout');
 
 			if (lastBadge) lastBadge.textContent = data.last_id;
-			if (nextBadge) nextBadge.textContent = data.next_id;
 
-			const champManuel = document.getElementById('CodeBarreAjout');
-			if(champManuel) champManuel.value = data.next_id;
+			// Logique d'auto-remplissage
+			if (data.code_vierge) {
+				if (nextBadge) nextBadge.innerHTML = data.code_vierge + ' <span class="badge bg-warning text-dark ms-1">Vierge dispo</span>';
+				if (champManuel) champManuel.value = data.code_vierge;
+
+			} else {
+				if (nextBadge) nextBadge.textContent = data.next_id;
+				if (champManuel) champManuel.value = data.next_id;
+			}
 		})
 		.catch(error => console.error("Erreur lecture ID:", error));
 }
@@ -633,7 +638,7 @@ $('#btnPlancheVierge').on('click', function(e) {
 		.then(response => response.json())
 		.then(data => {
 			if (data.success) {
-				window.open('../tmp/' + data.pdf, '_blank');
+				window.open('tmp/' + data.pdf, '_blank');
 				// Met à jour les compteurs sur la page si la fonction existe
 				if (typeof synchroniserCompteurID === "function") {
 					synchroniserCompteurID();
@@ -652,3 +657,40 @@ $('#btnPlancheVierge').on('click', function(e) {
 			$btn.prop('disabled', false);
 		});
 });
+
+// ... (le code du bouton planche vierge) ...
+
+function actualiserMonitoringAdmin() {
+	fetch('ajax/get_monitoring_etiquettes.php')
+		.then(response => response.json())
+		.then(data => {
+			if(data.succes) {
+				let divCode = document.getElementById('admin_prochain_code');
+				let divStock = document.getElementById('admin_stock_vierges');
+
+				if(divCode.innerText !== '...' && divCode.innerText !== 'N° ' + data.code && data.code !== 'RUPTURE') {
+					divCode.style.color = '#dc3545';
+					divCode.style.transform = 'scale(1.2)';
+					setTimeout(() => {
+						divCode.style.color = '';
+						divCode.style.transform = 'scale(1)';
+					}, 600);
+				}
+
+				divCode.innerText = (data.code === 'RUPTURE') ? '⚠️ RUPTURE' : 'N° ' + data.code;
+				divStock.innerText = data.stock;
+
+				divStock.className = 'fs-3 fw-bold text-success';
+				if(data.stock < 50 && data.stock > 0) {
+					divStock.className = 'fs-3 fw-bold text-warning';
+				} else if (data.stock === 0) {
+					divStock.className = 'fs-3 fw-bold text-danger';
+				}
+			}
+		})
+		.catch(error => console.error('Erreur Monitoring:', error));
+}
+
+actualiserMonitoringAdmin();
+setInterval(actualiserMonitoringAdmin, 3000);
+// RIEN D'AUTRE EN DESSOUS !

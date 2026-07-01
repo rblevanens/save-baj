@@ -116,6 +116,28 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
 <h2 class="text-center">Gestion admin</h2>
 
 <main class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 bg-light">
+                <div class="card-body d-flex justify-content-around align-items-center py-2">
+                    <div class="d-flex align-items-center gap-3">
+                        <i class="bi bi-activity fs-2 text-primary"></i>
+                        <h4 class="mb-0 fw-bold text-secondary">Monitoring<br>Étiquettes</h4>
+                    </div>
+                    <div class="vr"></div>
+                    <div class="text-center">
+                        <h6 class="text-muted text-uppercase mb-1" style="font-size: 0.8rem;">Prochaine Vierge</h6>
+                        <div id="admin_prochain_code" class="fs-3 fw-bold text-primary" style="transition: all 0.3s ease;">...</div>
+                    </div>
+                    <div class="vr"></div>
+                    <div class="text-center">
+                        <h6 class="text-muted text-uppercase mb-1" style="font-size: 0.8rem;">Stock Disponible</h6>
+                        <div id="admin_stock_vierges" class="fs-3 fw-bold text-success" style="transition: all 0.3s ease;">...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 	<div class="row" style="max-height: 420px; overflow: auto">
 		<!-- Section pour gérer l'argent en caisse -->
 		<div class="col-sm-3">
@@ -294,6 +316,7 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
             </div>
         </div>
 
+
         <div class="col-sm-3">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
@@ -332,7 +355,10 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
                     </div>
                 </div>
             </div>
+
         </div>
+
+
         <div class="col-sm-6">
             <div class="card">
                 <div class="card-header bg-primary">
@@ -350,7 +376,7 @@ if (isset($_COOKIE['loggedin']) && $_COOKIE['loggedin'] === 'true') {
                         </div>
 
                         <div class="col-auto">
-                            <div class="input-group" title="Code a 4 chiffres">
+                            <div class="input-group" title="Code à 4 ou 5 chiffres">
                                 <span class="input-group-text"><i class="bi bi-upc"></i></span>
                                 <input size="17" type="text" class="form-control"
                                        id="CodeBarreAjout" placeholder="Code à 4 ou 5 chiffres">
